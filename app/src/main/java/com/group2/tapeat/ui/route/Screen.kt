@@ -2,6 +2,7 @@ package com.group2.tapeat.ui.route
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -18,6 +19,12 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
         "customer_route",
         "Order",
         Icons.Default.ShoppingCart
+    )
+
+    // Rute untuk halaman Kasir (Konfirmasi & Pembayaran)
+    object Cashier : Screen(
+        "cashier_route",
+        "Cashier", Icons.Default.PointOfSale
     )
 
     // Rute untuk halaman Kitchen (Sistem Antrean Dapur)

@@ -49,6 +49,7 @@ fun BottomBar(navController: NavHostController) {
     // List menu yang akan ditampilkan di Bottom Bar
     val screens = listOf(
         Screen.Customer,
+        Screen.Cashier,
         Screen.Kitchen,
         Screen.Admin
     )
