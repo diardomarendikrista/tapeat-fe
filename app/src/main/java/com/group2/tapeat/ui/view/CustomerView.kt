@@ -36,18 +36,7 @@ import com.group2.tapeat.data.container.TapeatContainer
 import com.group2.tapeat.data.dto.ProductResponse
 import com.group2.tapeat.ui.model.CustomerModel
 import com.group2.tapeat.ui.theme.TapeatTheme
-import java.text.NumberFormat
-import java.util.Locale
-
-// =================
-// Helpers
-// =================
-fun formatRupiah(price: Double): String {
-    val localeID = Locale.forLanguageTag("id-ID")
-    return NumberFormat.getCurrencyInstance(localeID).apply {
-        maximumFractionDigits = 0
-    }.format(price)
-}
+import com.group2.tapeat.util.formatRupiah
 
 // ==========================================
 // TAMPILAN UTAMA (CUSTOMER VIEW)
@@ -89,6 +78,11 @@ fun CustomerView(
         }
     }
 
+    // Memastikan katalog menu selalu ter-refresh setiap tab Customer dibuka
+    LaunchedEffect(Unit) {
+        model.fetchProducts()
+    }
+
     // Tampilkan layar sukses jika state isOrderSuccess true
     if (isOrderSuccess) {
         OrderSuccessScreen(
@@ -120,7 +114,7 @@ fun CustomerView(
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // --- HEADER: Search Bar & Kategori ---
+                    // HEADER: Search Bar & Kategori
                     HeaderSection(
                         categories = dynamicCategories,
                         selectedCategory = selectedCategory,
@@ -134,7 +128,7 @@ fun CustomerView(
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     }
 
-                    // --- KONTEN: Grid Produk ---
+                    // KONTEN: Grid Produk
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2), // 2 Kolom
                         contentPadding = PaddingValues(
@@ -157,7 +151,7 @@ fun CustomerView(
                         }
                     }
 
-                    // --- FLOATING CART (Muncul jika keranjang tidak kosong) ---
+                    // FLOATING CART (Muncul jika keranjang tidak kosong)
                     // https://developer.android.com/reference/kotlin/androidx/compose/animation/AnimatedVisibility.composable?hl=en
                     AnimatedVisibility(
                         visible = model.cart.isNotEmpty(),
@@ -171,7 +165,7 @@ fun CustomerView(
                     }
                 }
 
-                // --- CHECKOUT BOTTOM SHEET ---
+                // CHECKOUT BOTTOM SHEET
                 if (isCheckoutOpen) {
                     CheckoutBottomSheet(
                         cart = model.cart,

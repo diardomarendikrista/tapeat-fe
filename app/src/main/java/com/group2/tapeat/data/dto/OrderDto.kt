@@ -19,14 +19,15 @@ data class OrderResponse(
     val orderType: String,
     val tableNumber: String?,
     val customerName: String?,
+    val totalAmount: Double,
     val status: String,
-    val items: List<OrderItemResponse>
+    val items: List<OrderItemDetailResponse>
 )
 
-data class OrderItemResponse(
+data class OrderItemDetailResponse(
     val id: Int,
-    val product: ProductResponse, // Menggunakan ProductResponse yang sudah ada
     val quantity: Int,
     val priceAtPurchase: Double,
-    val subtotal: Double
+    val subtotal: Double,
+    val product: ProductResponse
 )

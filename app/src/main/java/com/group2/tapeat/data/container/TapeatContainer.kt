@@ -10,7 +10,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 /**
- * Wadah sentral untuk merakit mesin Retrofit dan menyuntikkannya ke Repository.
+ * Container pusat untuk Retrofit
  */
 class TapeatContainer {
     companion object {
