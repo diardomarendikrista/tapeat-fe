@@ -1,7 +1,7 @@
 package com.group2.tapeat.data.container
 
-//import com.group2.tapeat.data.repository.KitchenRepository
-//import com.group2.tapeat.data.repository.OrderRepository
+import com.group2.tapeat.data.repository.KitchenRepository
+import com.group2.tapeat.data.repository.OrderRepository
 import com.group2.tapeat.data.repository.ProductRepository
 import com.group2.tapeat.data.service.KitchenApiService
 import com.group2.tapeat.data.service.OrderApiService
@@ -15,6 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 class TapeatContainer {
     companion object {
         const val BASE_URL = "https://tapeat-be.diardo.my.id/"
+        // const val BASE_URL = "http://localhost:4095/"
     }
 
     // Setup Utama Retrofit
@@ -41,11 +42,11 @@ class TapeatContainer {
         ProductRepository(productApiService)
     }
 
-//    val orderRepository: OrderRepository by lazy {
-//        OrderRepository(orderApiService)
-//    }
-//
-//    val kitchenRepository: KitchenRepository by lazy {
-//        KitchenRepository(kitchenApiService)
-//    }
+    val orderRepository: OrderRepository by lazy {
+        OrderRepository(orderApiService)
+    }
+
+    val kitchenRepository: KitchenRepository by lazy {
+        KitchenRepository(kitchenApiService)
+    }
 }
