@@ -26,7 +26,7 @@ fun AppRoutes(
         /**
          * Halaman Customer (Pemesanan Mandiri)
          * - Integrasi Backend:
-         * 1. GET /api/products -> Mengambil daftar menu yang aktif (isActive=true).
+         * 1. GET /api/products?availableOnly=true -> Mengambil daftar menu yang aktif.
          * 2. POST /api/orders  -> Mengirim payload pesanan (status awal: UNPAID).
          */
         composable(Screen.Customer.route) {
@@ -36,7 +36,7 @@ fun AppRoutes(
         /**
          * Halaman Kasir (Konfirmasi Pembayaran)
          * - Integrasi Backend:
-         * 1. GET /api/orders -> Menampilkan riwayat pesanan (filter status UNPAID di frontend).
+         * 1. GET /api/orders/unpaid -> Menampilkan riwayat pesanan (filter status UNPAID di frontend).
          * 2. PUT /api/queue/{id}/status?status=PENDING -> Mengubah status agar pesanan masuk ke dapur.
          */
         composable(Screen.Cashier.route) {
@@ -48,6 +48,7 @@ fun AppRoutes(
          * - Integrasi Backend:
          * 1. GET /api/queue/active -> Mengambil pesanan dengan status selain UNPAID dan CANCELLED.
          * 2. PUT /api/queue/{id}/status?status=READY -> Menandai pesanan selesai dimasak.
+         * 3. GET /api/queue/done -> Mengambil pesanan dengan status DELIVERED.
          */
         composable(Screen.Kitchen.route) {
             KitchenView()
@@ -57,7 +58,7 @@ fun AppRoutes(
          * Halaman Admin (Manajemen Produk)
          * - Peran: Pemilik toko mengelola katalog menu (tambah, edit, stok, foto).
          * - Integrasi Backend:
-         * 1. GET /api/products    -> List semua produk (termasuk yang tidak aktif).
+         * 1. GET /api/products    -> List semua produk.
          * 2. POST /api/products   -> Menambah menu baru (dengan upload gambar Multipart).
          * 3. PUT /api/products/id -> Update data menu atau stok.
          * 4. DELETE /api/products/id -> Soft delete (mengubah isActive menjadi false).
