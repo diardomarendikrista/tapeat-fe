@@ -12,7 +12,7 @@ import com.group2.tapeat.ui.theme.TapeatTheme
 @Composable
 fun KitchenView() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Kitchen Display System Screen")
+        Text("Kitchen Display System Screen mas yohanes")
     }
 }
 
