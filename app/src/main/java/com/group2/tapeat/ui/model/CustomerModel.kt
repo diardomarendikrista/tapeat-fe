@@ -29,12 +29,13 @@ class CustomerModel : ViewModel() {
     var selectedCategory = mutableStateOf("Semua")
     var searchQuery = mutableStateOf("")
 
-    // STATE CART
+    // STATE KERANJANG & ORDER
     val cart = mutableStateListOf<ProductResponse>()
-
-    // STATE ORDER SUCCESS
     var isOrderSuccess = mutableStateOf(false)
     var lastOrderId = mutableStateOf("")
+
+    // STATE ERROR INFO
+    val errorMessage = mutableStateOf<String?>(null)
 
     init {
         fetchProducts()
@@ -91,8 +92,14 @@ class CustomerModel : ViewModel() {
                 lastOrderId.value = "ORD-${response.id}"
                 cart.clear() // Bersihkan keranjang dan tampilkan layar sukses
                 isOrderSuccess.value = true
+
+                // Refresh data produk agar stok terbaru dari backend langsung tampil
+                fetchProducts()
             } catch (e: Exception) {
                 e.printStackTrace()
+                // Tampilkan error jika checkout gagal (misal karena stok habis)
+                errorMessage.value =
+                    "Gagal memproses pesanan. Periksa koneksi atau stok mungkin tidak cukup."
             }
         }
     }
@@ -100,11 +107,22 @@ class CustomerModel : ViewModel() {
     // Helpers
 
     //Menambahkan item menu ke dalam keranjang belanja (cart) lokal.
-    fun addToCart(product: ProductResponse) =
-        cart.add(product)
+    fun addToCart(product: ProductResponse) {
+        val currentQtyInCart = cart.count { it.id == product.id }
+        if (currentQtyInCart < product.stock) {
+            cart.add(product)
+        } else {
+            errorMessage.value = "Maksimal pemesanan ${product.name} adalah ${product.stock} porsi."
+        }
+    }
 
     // Mengembalikan status UI dari layar "Pesanan Sukses" kembali ke layar pemesanan awal.
     fun resetSuccessState() {
         isOrderSuccess.value = false
+    }
+
+    // Membersihkan error setelah ditampilkan
+    fun clearError() {
+        errorMessage.value = null
     }
 }

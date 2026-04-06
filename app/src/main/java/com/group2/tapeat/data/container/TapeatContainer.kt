@@ -14,8 +14,8 @@ import retrofit2.converter.gson.GsonConverterFactory
  */
 class TapeatContainer {
     companion object {
-//        const val BASE_URL = "https://tapeat-be.diardo.my.id/"
-         const val BASE_URL = "http://192.168.0.110:4095/" // IP LOKAL
+        const val BASE_URL = "https://tapeat-be.diardo.my.id/"
+//        const val BASE_URL = "http://192.168.0.110:4095/" // IP LOKAL
     }
 
     // Setup Utama Retrofit

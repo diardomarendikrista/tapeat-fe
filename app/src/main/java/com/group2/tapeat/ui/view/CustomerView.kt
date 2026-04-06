@@ -78,10 +78,33 @@ fun CustomerView(
         }
     }
 
+    // Auto-close drawer checkout JIKA sukses saja
+    LaunchedEffect(isOrderSuccess) {
+        if (isOrderSuccess) {
+            isCheckoutOpen = false
+        }
+    }
+
+    // Menampilkan Error sebagai Toast
+    val context = LocalContext.current
+    val errorMessage by model.errorMessage
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { msg ->
+            android.widget.Toast.makeText(
+                context,
+                msg,
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            model.fetchProducts() // refetch agar tau stok sekarang berapa
+            model.clearError() // Bersihkan state agar Toast tidak muncul berulang kali
+        }
+    }
+
     // Memastikan katalog menu selalu ter-refresh setiap tab Customer dibuka
     LaunchedEffect(Unit) {
         model.fetchProducts()
     }
+
 
     // Tampilkan layar sukses jika state isOrderSuccess true
     if (isOrderSuccess) {
@@ -177,7 +200,6 @@ fun CustomerView(
                                 tableNumber = if (orderType == "DINE_IN") detail else null,
                                 customerName = if (orderType == "TAKEAWAY") detail else null
                             )
-                            isCheckoutOpen = false
                         }
                     )
                 }
@@ -317,12 +339,28 @@ fun ProductCard(product: ProductResponse, onAddToCart: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = formatRupiah(product.price),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
+                // Baris Harga & Stok
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = formatRupiah(product.price),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+
+                    // Indikator Stok
+                    Text(
+                        text = "Sisa: ${product.stock}",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        // Jika stok kurang dari 5, ubah warna jadi merah sebagai peringatan
+                        color = if (product.stock <= 5) Color(0xFFDC2626) else Color.Gray
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
