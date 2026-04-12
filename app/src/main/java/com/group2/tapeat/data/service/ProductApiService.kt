@@ -31,6 +31,7 @@ interface ProductApiService {
         @Part("name") name: RequestBody,
         @Part("price") price: RequestBody,
         @Part("stock") stock: RequestBody,
+        @Part("category") category: RequestBody,
         @Part image: MultipartBody.Part? = null
     ): ProductResponse
 
@@ -42,6 +43,7 @@ interface ProductApiService {
         @Part("name") name: RequestBody,
         @Part("price") price: RequestBody,
         @Part("stock") stock: RequestBody,
+        @Part("category") category: RequestBody,
         @Part image: MultipartBody.Part? = null
     ): ProductResponse
 

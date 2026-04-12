@@ -27,9 +27,11 @@ class ProductRepository(private val apiService: ProductApiService) {
         name: RequestBody,
         price: RequestBody,
         stock: RequestBody,
+        category: RequestBody,
         image: MultipartBody.Part?
     ) =
-        apiService.createProduct(name, price, stock, image)
+        apiService.createProduct(name, price, stock, category, image)
+
 
     // Edit produk yang sudah ada (pakai gambar Multipart)
     suspend fun updateProduct(
@@ -37,9 +39,10 @@ class ProductRepository(private val apiService: ProductApiService) {
         name: RequestBody,
         price: RequestBody,
         stock: RequestBody,
+        category: RequestBody,
         image: MultipartBody.Part?
     ) =
-        apiService.updateProduct(id, name, price, stock, image)
+        apiService.updateProduct(id, name, price, stock, category, image)
 
     // Hapus produk (Soft Delete - mengubah isActive jadi false di backend)
     suspend fun deleteProduct(id: Int) =
