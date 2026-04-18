@@ -68,6 +68,7 @@ fun BottomBar(navController: NavHostController) {
                 label = {
                     Text(text = screen.title)
                 },
+
                 selected = currentRoute == screen.route, // Menu aktif jika rute cocok
                 onClick = {
                     // Logic ketika tombol menu diklik
