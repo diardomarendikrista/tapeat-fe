@@ -24,17 +24,25 @@ import com.group2.tapeat.ui.viewmodel.AdminViewModel
 /**
  * Layar utama Admin untuk manajemen produk (CRUD).
  *
- * Komponen yang dipakai:
- * - [ProductAdminCard] → card satu item produk
- * - [ProductFormSheet] → bottom sheet form tambah/edit
+ * Layar ini menampilkan daftar semua produk (termasuk yang stoknya habis)
+ * dan menyediakan aksi untuk menambah, mengedit, serta menghapus produk.
+ *
+ * Komponen pendukung:
+ * - [ProductAdminCard]  → menampilkan satu item produk dalam bentuk card
+ * - [ProductFormView]   → bottom sheet form untuk tambah/edit produk
+ * - [AdminViewModel]    → menyimpan state dan mengelola logika bisnis
  */
 @Composable
 fun AdminView() {
+    // Context dibutuhkan oleh ViewModel untuk membaca file gambar dari URI galeri
     val context = LocalContext.current
+
+    // Instansiasi ViewModel menggunakan Factory agar bisa menerima ProductRepository
     val viewModel: AdminViewModel = viewModel(
         factory = AdminViewModel.Factory(TapeatContainer().productRepository)
     )
 
+    // Mengamati semua state dari ViewModel
     val products by viewModel.products.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -43,15 +51,18 @@ fun AdminView() {
     val editingProduct by viewModel.editingProduct.collectAsState()
     val productToDelete by viewModel.productToDelete.collectAsState()
 
+    // State untuk menampilkan snackbar notifikasi di bagian bawah layar
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Tampilkan snackbar saat ada pesan sukses atau error
+    // Tampilkan snackbar saat ada pesan sukses (misal: "Produk berhasil ditambahkan")
     LaunchedEffect(successMessage) {
         successMessage?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearSuccessMessage()
         }
     }
+
+    // Tampilkan snackbar saat ada pesan error (misal: "Gagal memuat produk")
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -59,13 +70,16 @@ fun AdminView() {
         }
     }
 
-    // aplikasi menarik data terbaru dari server setiap kali tab Admin dibuka (agar update stock ketika role lain melakukan transaksi)
+    // Menarik data terbaru dari server setiap kali tab Admin dibuka.
+    // Ini memastikan stok yang ditampilkan selalu sinkron,
+    // misalnya setelah Kasir atau Kiosk melakukan transaksi.
     LaunchedEffect(Unit) {
         viewModel.loadProducts()
     }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        // FAB di pojok kanan bawah untuk membuka form tambah produk baru
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.openAddForm() },
@@ -80,7 +94,7 @@ fun AdminView() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Header
+            // Judul halaman
             Text(
                 text = "Manajemen Menu",
                 style = MaterialTheme.typography.headlineMedium,
@@ -89,7 +103,7 @@ fun AdminView() {
             )
 
             when {
-                // Loading pertama kali (list masih kosong)
+                // State 1: Sedang loading dan belum ada data → tampilkan spinner
                 isLoading && products.isEmpty() -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -98,7 +112,8 @@ fun AdminView() {
                         CircularProgressIndicator()
                     }
                 }
-                // Tidak ada produk sama sekali
+
+                // State 2: Tidak ada produk sama sekali → tampilkan pesan kosong
                 products.isEmpty() -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -115,12 +130,16 @@ fun AdminView() {
                         }
                     }
                 }
-                // Tampilkan daftar produk
+
+                // State 3: Ada data → tampilkan daftar produk
                 else -> {
+                    // LazyColumn hanya me-render item yang terlihat di layar (efisien untuk list panjang)
                     LazyColumn(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+                        // key = { it.id } membantu Compose mengidentifikasi item secara unik
+                        // sehingga animasi recompose lebih efisien
                         items(products, key = { it.id }) { product ->
                             ProductAdminCard(
                                 product = product,
@@ -128,7 +147,7 @@ fun AdminView() {
                                 onDelete = { viewModel.confirmDelete(product) }
                             )
                         }
-                        // Spacer bawah agar FAB tidak menutupi item terakhir
+                        // Spacer tambahan agar item terakhir tidak tertutup FAB
                         item { Spacer(modifier = Modifier.height(72.dp)) }
                     }
                 }
@@ -136,7 +155,8 @@ fun AdminView() {
         }
     }
 
-    // Bottom Sheet Form Tambah / Edit
+    // Tampilkan bottom sheet form jika showFormSheet = true
+    // editingProduct menentukan mode: null = Tambah, tidak null = Edit
     if (showFormSheet) {
         ProductFormView(
             editingProduct = editingProduct,
@@ -148,7 +168,8 @@ fun AdminView() {
         )
     }
 
-    // Dialog Konfirmasi Hapus
+    // Dialog konfirmasi sebelum menghapus produk
+    // Hanya muncul jika productToDelete tidak null
     productToDelete?.let { product ->
         AlertDialog(
             onDismissRequest = { viewModel.cancelDelete() },
@@ -175,6 +196,11 @@ fun AdminView() {
     }
 }
 
+/**
+ * Preview statis untuk AdminView.
+ * Menggunakan data dummy agar bisa ditampilkan di panel preview Android Studio
+ * tanpa memerlukan ViewModel atau koneksi jaringan.
+ */
 @Preview(showBackground = true)
 @Composable
 fun AdminViewPreview() {
@@ -191,6 +217,7 @@ fun AdminViewPreview() {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
+            // Produk normal dengan stok tersedia
             ProductAdminCard(
                 product = ProductResponse(
                     id = 1, name = "Nasi Goreng", price = 25000.0,
@@ -205,6 +232,7 @@ fun AdminViewPreview() {
                 ),
                 onEdit = {}, onDelete = {}
             )
+            // Produk dengan stok habis — teks stok akan berwarna merah
             ProductAdminCard(
                 product = ProductResponse(
                     id = 3, name = "Steak Wellington", price = 95000.0,

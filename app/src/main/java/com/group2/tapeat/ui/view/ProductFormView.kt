@@ -29,16 +29,22 @@ import com.group2.tapeat.data.dto.ProductResponse
 import com.group2.tapeat.ui.theme.TapeatTheme
 
 /**
- * Bottom Sheet berisi form untuk tambah atau edit produk.
+ * Komponen bottom sheet berisi form untuk menambah atau mengedit produk.
  *
- * Mode ditentukan dari parameter [editingProduct]:
- * - null       → mode Tambah (form kosong)
- * - tidak null → mode Edit (form terisi data produk yang dipilih)
+ * Mode form ditentukan secara otomatis dari parameter [editingProduct]:
+ * - null       → mode **Tambah**: seluruh field kosong, judul "Tambah Menu Baru"
+ * - tidak null → mode **Edit**: field terisi data produk, judul "Edit Menu"
+ *
+ * Fitur utama:
+ * - Image picker untuk memilih gambar dari galeri perangkat
+ * - Pre-fill data otomatis saat mode edit
+ * - Validasi input dilakukan di [AdminViewModel] sebelum request dikirim
+ * - Loading indicator pada tombol Simpan saat proses berlangsung
  *
  * @param editingProduct Produk yang sedang diedit, atau null jika mode tambah.
- * @param isLoading Apakah sedang ada proses simpan yang berjalan.
- * @param onDismiss Callback saat sheet ditutup atau tombol Batal ditekan.
- * @param onSave Callback saat tombol Simpan ditekan, membawa data form.
+ * @param isLoading      True saat proses simpan sedang berjalan (menonaktifkan tombol).
+ * @param onDismiss      Callback saat sheet ditutup atau tombol Batal ditekan.
+ * @param onSave         Callback saat tombol Simpan ditekan, membawa data form.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,16 +54,21 @@ fun ProductFormView(
     onDismiss: () -> Unit,
     onSave: (name: String, price: String, stock: String, category: String, imageUri: Uri?) -> Unit
 ) {
+    // true jika sedang dalam mode edit, false jika mode tambah
     val isEditMode = editingProduct != null
 
-    // State form — di-reset & pre-fill setiap kali editingProduct berubah
-    var name by remember(editingProduct) { mutableStateOf(editingProduct?.name ?: "") }
-    var price by remember(editingProduct) { mutableStateOf(editingProduct?.price?.toInt()?.toString() ?: "") }
-    var stock by remember(editingProduct) { mutableStateOf(editingProduct?.stock?.toString() ?: "") }
+    // State tiap field form.
+    // remember(editingProduct) memastikan nilai di-reset dan di-pre-fill
+    // setiap kali produk yang diedit berubah.
+    var name     by remember(editingProduct) { mutableStateOf(editingProduct?.name ?: "") }
+    var price    by remember(editingProduct) { mutableStateOf(editingProduct?.price?.toInt()?.toString() ?: "") }
+    var stock    by remember(editingProduct) { mutableStateOf(editingProduct?.stock?.toString() ?: "") }
     var category by remember(editingProduct) { mutableStateOf(editingProduct?.category ?: "") }
+
+    // URI gambar yang baru dipilih dari galeri. null = belum pilih gambar baru.
     var selectedImageUri by remember(editingProduct) { mutableStateOf<Uri?>(null) }
 
-    // Launcher untuk membuka galeri perangkat
+    // Launcher untuk membuka galeri perangkat dan mendapatkan URI gambar yang dipilih
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -66,6 +77,7 @@ fun ProductFormView(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        // skipPartiallyExpanded = true agar sheet langsung terbuka penuh, tidak setengah layar
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         Column(
@@ -75,14 +87,19 @@ fun ProductFormView(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Judul form
+            // Judul form — berubah sesuai mode
             Text(
                 text = if (isEditMode) "Edit Menu" else "Tambah Menu Baru",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
-            // Area upload gambar
+            // --- Area Upload Gambar ---
+            // Seluruh Box bisa di-tap untuk membuka galeri.
+            // Menampilkan salah satu dari 3 kondisi:
+            // 1. Gambar baru yang dipilih (selectedImageUri tidak null)
+            // 2. Gambar lama dari server (mode edit, belum ganti gambar)
+            // 3. Placeholder kosong (mode tambah atau belum ada gambar)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,7 +115,7 @@ fun ProductFormView(
                 contentAlignment = Alignment.Center
             ) {
                 when {
-                    // Gambar baru yang baru dipilih dari galeri
+                    // Kondisi 1: Gambar baru yang baru dipilih dari galeri
                     selectedImageUri != null -> {
                         AsyncImage(
                             model = selectedImageUri,
@@ -109,7 +126,9 @@ fun ProductFormView(
                                 .clip(RoundedCornerShape(12.dp))
                         )
                     }
-                    // Gambar lama dari server (mode edit, belum ganti gambar)
+
+                    // Kondisi 2: Mode edit dan produk sudah punya gambar di server
+                    // Tampilkan gambar lama dengan overlay hint "tap untuk ganti"
                     isEditMode && !editingProduct?.imageUrl.isNullOrBlank() -> {
                         AsyncImage(
                             model = "${TapeatContainer.BASE_URL}${editingProduct?.imageUrl}",
@@ -119,7 +138,7 @@ fun ProductFormView(
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(12.dp))
                         )
-                        // Overlay hint "tap untuk ganti"
+                        // Overlay gelap sebagai petunjuk bahwa gambar bisa diganti
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -134,7 +153,8 @@ fun ProductFormView(
                             )
                         }
                     }
-                    // Placeholder saat belum ada gambar
+
+                    // Kondisi 3: Belum ada gambar — tampilkan placeholder icon
                     else -> {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(
@@ -151,7 +171,7 @@ fun ProductFormView(
                 }
             }
 
-            // Field Nama Produk
+            // --- Field Nama Produk ---
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -161,7 +181,7 @@ fun ProductFormView(
                 singleLine = true
             )
 
-            // Field Kategori (opsional)
+            // --- Field Kategori (opsional) ---
             OutlinedTextField(
                 value = category,
                 onValueChange = { category = it },
@@ -171,7 +191,8 @@ fun ProductFormView(
                 singleLine = true
             )
 
-            // Field Harga & Stok (sejajar dalam satu baris)
+            // --- Field Harga & Stok (sejajar dalam satu baris) ---
+            // Menggunakan KeyboardType.Number agar keyboard angka muncul otomatis
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -198,11 +219,12 @@ fun ProductFormView(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Tombol Batal & Simpan
+            // --- Tombol Batal & Simpan ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Tombol Batal → menutup sheet tanpa menyimpan
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
@@ -210,12 +232,16 @@ fun ProductFormView(
                 ) {
                     Text("Batal")
                 }
+
+                // Tombol Simpan → mengirim data form ke ViewModel
+                // Saat isLoading = true, tombol nonaktif dan menampilkan spinner
                 Button(
                     onClick = { onSave(name, price, stock, category, selectedImageUri) },
                     modifier = Modifier.weight(1f),
                     enabled = !isLoading
                 ) {
                     if (isLoading) {
+                        // Spinner kecil sebagai indikator proses upload sedang berjalan
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.dp),
                             color = Color.White,
@@ -230,10 +256,13 @@ fun ProductFormView(
     }
 }
 
+/**
+ * Preview statis untuk [ProductFormView] dalam mode Tambah (form kosong).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ProductFormSheetPreview() {
+fun ProductFormViewPreview() {
     TapeatTheme {
         ProductFormView(
             editingProduct = null,
