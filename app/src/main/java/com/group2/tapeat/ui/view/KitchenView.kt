@@ -30,6 +30,11 @@ fun KitchenView(
 
     var selectedTab by remember { mutableStateOf("active") }
 
+    // aplikasi menarik data terbaru dari server setiap kali tab Kitchen dibuka (agar update ketika kasir mengkonfirmasi pesanan)
+    LaunchedEffect(Unit) {
+        viewModel.fetchAll()
+    }
+
     // FILTER DATA
     val orders = if (selectedTab == "active") {
         activeOrders

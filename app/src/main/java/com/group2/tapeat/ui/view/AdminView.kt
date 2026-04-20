@@ -59,6 +59,11 @@ fun AdminView() {
         }
     }
 
+    // aplikasi menarik data terbaru dari server setiap kali tab Admin dibuka (agar update stock ketika role lain melakukan transaksi)
+    LaunchedEffect(Unit) {
+        viewModel.loadProducts()
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {

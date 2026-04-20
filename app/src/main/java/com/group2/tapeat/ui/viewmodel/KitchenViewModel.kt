@@ -10,7 +10,6 @@ import kotlinx.coroutines.launch
 
 class KitchenViewModel : ViewModel() {
 
-    // ✅ BENAR
     private val kitchenRepository = TapeatContainer().kitchenRepository
 
     private val _activeOrders = MutableStateFlow<List<OrderResponse>>(emptyList())
