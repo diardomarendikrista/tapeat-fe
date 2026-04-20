@@ -232,7 +232,7 @@ fun AdminViewPreview() {
                 ),
                 onEdit = {}, onDelete = {}
             )
-            // Produk dengan stok habis — teks stok akan berwarna merah
+            // Produk dengan stok habis - teks stok akan berwarna merah
             ProductAdminCard(
                 product = ProductResponse(
                     id = 3, name = "Steak Wellington", price = 95000.0,

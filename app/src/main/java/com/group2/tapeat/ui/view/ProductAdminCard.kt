@@ -178,7 +178,7 @@ fun ProductAdminCardPreview() {
                 onEdit = {},
                 onDelete = {}
             )
-            // Produk dengan stok habis — teks stok akan berwarna merah
+            // Produk dengan stok habis - teks stok akan berwarna merah
             ProductAdminCard(
                 product = ProductResponse(
                     id = 2,
