@@ -19,40 +19,63 @@ import com.group2.tapeat.data.dto.OrderResponse
 import com.group2.tapeat.ui.theme.TapeatTheme
 import com.group2.tapeat.ui.viewmodel.KitchenViewModel
 
+/**
+ * Tampilan utama Kitchen (Dapur)
+ * Menampilkan:
+ * - Tab Masak (antrean aktif)
+ * - Tab Riwayat (hanya yang selesai / DELIVERED)
+ */
 @Composable
 fun KitchenView(
     viewModel: KitchenViewModel = viewModel()
 ) {
 
-    val activeOrders by viewModel.activeOrders.collectAsState()
-    val doneOrders by viewModel.doneOrders.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    // =========================
+    // STATE DARI VIEWMODEL
+    // =========================
+    val activeOrders by viewModel.activeOrders.collectAsState() // antrean masak
+    val doneOrders by viewModel.doneOrders.collectAsState()     // antrean selesai
+    val isLoading by viewModel.isLoading.collectAsState()       // loading indikator
 
+    // State untuk menentukan tab aktif
     var selectedTab by remember { mutableStateOf("active") }
 
-    // aplikasi menarik data terbaru dari server setiap kali tab Kitchen dibuka (agar update ketika kasir mengkonfirmasi pesanan)
+    /**
+     * LaunchedEffect akan dijalankan sekali saat composable pertama kali muncul.
+     * Digunakan untuk fetch data dari server.
+     */
     LaunchedEffect(Unit) {
         viewModel.fetchAll()
     }
 
-    // FILTER DATA
+    /**
+     * Filtering data:
+     * - Tab "active" → tampilkan semua antrean masak
+     * - Tab "done" → hanya tampilkan yang status DELIVERED (selesai)
+     */
     val orders = if (selectedTab == "active") {
         activeOrders
     } else {
         doneOrders.filter { it.status == "DELIVERED" }
     }
 
+    // =========================
+    // UI UTAMA
+    // =========================
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
 
+        // Judul halaman
         Text("Kitchen Display", style = MaterialTheme.typography.titleLarge)
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // TAB MODERN
+        // =========================
+        // TAB NAVIGATION (PILL STYLE)
+        // =========================
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -60,6 +83,7 @@ fun KitchenView(
                 .padding(4.dp)
         ) {
 
+            // TAB MASAK
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -72,11 +96,12 @@ fun KitchenView(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Masak (${activeOrders.size})",
+                    text = "Masak (${activeOrders.size})", // jumlah antrean aktif
                     color = Color.Black
                 )
             }
 
+            // TAB RIWAYAT (HANYA SELESAI)
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -97,18 +122,28 @@ fun KitchenView(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // =========================
+        // LOADING INDICATOR
+        // =========================
         if (isLoading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
+        // =========================
+        // LIST ANTREAN
+        // =========================
         LazyColumn {
             items(orders, key = { it.id }) { order ->
                 KitchenOrderCard(
                     order = order,
                     isActive = selectedTab == "active",
+
+                    // Aksi jika pesanan selesai
                     onDone = {
                         viewModel.updateStatus(order.id, "DELIVERED")
                     },
+
+                    // Aksi jika pesanan dibatalkan
                     onCancel = {
                         viewModel.updateStatus(order.id, "CANCELLED")
                     }
@@ -118,6 +153,9 @@ fun KitchenView(
     }
 }
 
+/**
+ * Card untuk menampilkan 1 pesanan
+ */
 @Composable
 fun KitchenOrderCard(
     order: OrderResponse,
@@ -126,8 +164,9 @@ fun KitchenOrderCard(
     onCancel: () -> Unit
 ) {
 
+    // Warna background berdasarkan status
     val backgroundColor = if (order.status == "DELIVERED") {
-        Color(0xFFD1FAE5)
+        Color(0xFFD1FAE5) // hijau muda (selesai)
     } else {
         Color.White
     }
@@ -141,6 +180,9 @@ fun KitchenOrderCard(
     ) {
         Column {
 
+            // =========================
+            // HEADER ORDER
+            // =========================
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -149,11 +191,14 @@ fun KitchenOrderCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("ORD-${order.id}")
-                    Text(order.orderType)
+                    Text("ORD-${order.id}")     // ID pesanan
+                    Text(order.orderType)      // tipe pesanan (DINE_IN / TAKEAWAY)
                 }
             }
 
+            // =========================
+            // DETAIL ITEM PESANAN
+            // =========================
             Column(modifier = Modifier.padding(10.dp)) {
 
                 order.items.forEach {
@@ -163,6 +208,9 @@ fun KitchenOrderCard(
                     }
                 }
 
+                // =========================
+                // STATUS (HANYA DI RIWAYAT)
+                // =========================
                 if (!isActive) {
                     Spacer(modifier = Modifier.height(6.dp))
 
@@ -172,10 +220,14 @@ fun KitchenOrderCard(
                     )
                 }
 
+                // =========================
+                // ACTION BUTTON (TAB MASAK)
+                // =========================
                 if (isActive) {
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Row {
+                        // Tombol batal
                         OutlinedButton(
                             onClick = onCancel,
                             modifier = Modifier.weight(1f),
@@ -188,6 +240,7 @@ fun KitchenOrderCard(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
+                        // Tombol selesai
                         Button(
                             onClick = onDone,
                             modifier = Modifier.weight(1f),
@@ -204,6 +257,9 @@ fun KitchenOrderCard(
     }
 }
 
+/**
+ * Preview UI (untuk Android Studio Preview)
+ */
 @Preview(showBackground = true)
 @Composable
 fun KitchenPreview() {
